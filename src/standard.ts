@@ -4,11 +4,15 @@ export interface CpCollection {
   _created: number;
   _modified: number;
 }
+
 export type CpSingleton<T> = T;
 
-export interface CpFile {}
+export interface CpFile {
+}
 
-export interface CpAsset {}
+export interface CpAsset {
+  path: string;
+}
 
 export interface CpImage {
   path: string;
@@ -34,6 +38,6 @@ export type CpSaveData<T> = DeepPartial<T>;
 
 type DeepPartial<T> = T extends object
   ? {
-      [P in keyof T]?: DeepPartial<T[P]>;
-    }
+    [P in keyof T]?: DeepPartial<T[P]>;
+  }
   : T;

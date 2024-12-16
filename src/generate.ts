@@ -28,8 +28,8 @@ export async function generate(outputFile: string) {
       functionDeclaration,
       typeDefinition,
     );
-    functionDeclaration += funcDecl;
-    typeDefinition += typeDef;
+    functionDeclaration = funcDecl;
+    typeDefinition = typeDef;
   }
 
   // Handle singleton collections
@@ -60,6 +60,8 @@ ${typeDefinition}
 
 ${functionDeclaration}
 `;
+
+  console.log(`Generating ${typeDefinition.split("\n").length}, ${functionDeclaration.split("\n").length} lints`);
 
   fs.writeFileSync(outputFile, fileContent.trim(), "utf8");
 }

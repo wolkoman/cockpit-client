@@ -37,5 +37,6 @@ export function generateDefinitions(
   }, "");
 
   typeDefinition += `}\n${additionalDefinitions}`;
+  console.log(`Generating definition for '${name}'`);
   return { functionDeclaration, typeDefinition };
 }
