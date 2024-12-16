@@ -1,0 +1,17 @@
+# Ignore TypeScript source files
+src/
+
+# Ignore test files
+tests/
+*.test.ts
+
+# Ignore node_modules (shouldn't be included in the package)
+node_modules/
+
+# Ignore TypeScript config
+tsconfig.json
+
+# Ignore other development files
+*.log
+*.md
+dist/ (optional, if you're building before publishing)

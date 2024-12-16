@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "declaration": true,           // Generate declaration files
+    "declarationMap": true,        // (Optional) Generate source maps for declarations
+    "emitDeclarationOnly": false,  // Emit both .js and .d.ts files
+    "target": "ES2020",
+    "module": "CommonJS",
+    "outDir": "dist",
+    "strict": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["src"]
+}
