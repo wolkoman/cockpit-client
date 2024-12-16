@@ -1,7 +1,7 @@
-export function titlecase(value: string) {
+export function titlecase(value: string): string {
   return value
     .split(/[_\-]/)
-    .map((sub) => sub.substring(0, 1).toUpperCase() + sub.substring(1))
+    .map((sub) => sub.charAt(0).toUpperCase() + sub.slice(1))
     .join("")
     .replace(/!/g, "_");
 }

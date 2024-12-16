@@ -1,24 +1,41 @@
-import {resolveTypes} from "./resolveTypes";
+import { resolveTypes } from "./resolveTypes";
 
 export function generateDefinitions(
   name: string,
   typename: string,
   fields: Record<string, any>,
-  functionDeclaration: string = "",
-  typeDefinition: string = "",
+  functionDeclaration = "",
+  typeDefinition = "",
 ) {
-  typeDefinition += `export interface ${typename} extends CpCollection{\n`;
-  typeDefinition += `\t__collectionName: '${name}'\n`;
-  functionDeclaration += `export function fetch${typename}(filter?: CpFilter<${typename}>, sort?: CpSort<${typename}>): CpEntries<${typename}> {\n\treturn _fetchCollection("${name}", filter);\n}\n\n`;
-  functionDeclaration += `export function fetchOne${typename}(filter?: CpFilter<${typename}>): CpOneEntry<${typename}> {\n\treturn _fetchOneCollection("${name}", filter);\n}\n\n`;
-  functionDeclaration += `export function save${typename}(data: CpSaveData<${typename}>): CpOneEntry<${typename}> {\n\treturn saveCollection("${name}", data);\n}\n\n`;
-  functionDeclaration += `export function delete${typename}(id: string): Promise<void> {\n\treturn deleteCollection("${name}", id);\n}\n\n`;
-  let additionalDefinitions = "\n";
-  Object.entries(fields).forEach(([fieldName, options]) => {
-    const typeInformation = resolveTypes(options, fieldName, typename, name);
-    typeDefinition += typeInformation.typeDefinition;
-    additionalDefinitions += typeInformation.additionalDefinitions;
-  });
+  // Generate type definition
+  typeDefinition += `export interface ${typename} extends CpCollection {\n`;
+  typeDefinition += `  __collectionName: '${name}';\n`;
+
+  // Generate function declarations
+  const functions = [
+    `fetch${typename}(filter?: CpFilter<${typename}>, sort?: CpSort<${typename}>): CpEntries<${typename}> {
+      return _fetchCollection("${name}", filter);
+    }`,
+    `fetchOne${typename}(filter?: CpFilter<${typename}>): CpOneEntry<${typename}> {
+      return _fetchOneCollection("${name}", filter);
+    }`,
+    `save${typename}(data: CpSaveData<${typename}>): CpOneEntry<${typename}> {
+      return saveCollection("${name}", data);
+    }`,
+    `delete${typename}(id: string): Promise<void> {
+      return deleteCollection("${name}", id);
+    }`
+  ];
+  functionDeclaration += functions.map(fn => `export function ${fn}\n`).join("\n");
+
+  // Process fields
+  const additionalDefinitions = Object.entries(fields).reduce((acc, [fieldName, options]) => {
+    const { typeDefinition: fieldDef, additionalDefinitions: fieldAdditional } =
+      resolveTypes(options, fieldName, typename, name);
+    typeDefinition += fieldDef;
+    return acc + fieldAdditional;
+  }, "");
+
   typeDefinition += `}\n${additionalDefinitions}`;
-  return {functionDeclaration, typeDefinition};
+  return { functionDeclaration, typeDefinition };
 }

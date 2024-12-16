@@ -1,30 +1,42 @@
 #!/usr/bin/env node
-import {Command} from "commander";
-import {generate} from "./generate";
+
+import { Command } from "commander";
+import { generate } from "./generate";
 import dotenv from "dotenv";
 import path from "node:path";
 
+// Load environment variables
 dotenv.config();
 
 const program = new Command();
-console.log("TEST")
+
+// CLI metadata
 program
   .name("cockpit-client")
   .description("CLI for generating cockpit-client outputs")
   .version("1.0.0");
 
+// Generate command
 program
   .command("generate")
   .description("Generate the client output file")
   .requiredOption("-o, --output <path>", "Output file path")
   .action(async (options) => {
     try {
+      // Resolve full output path
       const fullPath = path.resolve(process.cwd(), options.output);
+
+      console.log(`Generating client output at: ${fullPath}`);
+
+      // Run the generate function
       await generate(fullPath);
+
+      console.log("Client output generated successfully.");
     } catch (error) {
-      console.error("Error:", error);
+      console.error("Error during generation:", error);
       process.exit(1); // Exit with failure code
     }
   });
 
-program.parseAsync(process.argv); // Use `parseAsync` for async commands
+// Parse arguments asynchronously
+program.parseAsync(process.argv);

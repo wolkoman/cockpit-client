@@ -4,154 +4,104 @@ dotenv.config();
 
 const host = process.env.COCKPIT_HOST!;
 const token = process.env.COCKPIT_TOKEN!;
+const headers = {
+  "Content-Type": "application/json",
+  "Cockpit-Token": token,
+};
 
+const fetchJSON = (url: string, options: RequestInit = {}) =>
+  fetch(url, options).then((res) => res.json());
+
+// List all collections
 export async function listCollections(): Promise<string[]> {
-  return fetch(`${host}/api/collections/listCollections`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      "Cockpit-Token": token,
-    },
-  }).then((x) => x.json());
+  return fetchJSON(`${host}/api/collections/listCollections`, { method: "GET", headers });
 }
+
+// Authenticate a Cockpit user
 export async function authenticateCockpitUser(
   user: string,
   password: string,
 ): Promise<
   | { error: string }
   | {
-      user: string;
-      email: string;
-      group: string;
-      name: string;
-      _id: string;
-      active: boolean;
-    }
+  user: string;
+  email: string;
+  group: string;
+  name: string;
+  _id: string;
+  active: boolean;
+}
 > {
-  return fetch(`${host}/api/cockpit/authUser`, {
+  return fetchJSON(`${host}/api/cockpit/authUser`, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Cockpit-Token": token,
-    },
+    headers,
     body: JSON.stringify({ user, password }),
-  }).then((x) => x.json());
+  });
 }
 
-export async function getCollectionFields(
-  collectionName: string,
-): Promise<any[]> {
-  const url = `${host}/api/collections/get/${collectionName}?filter[_id]=unknown}`;
-  return await fetch(url, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      "Cockpit-Token": token,
-    },
-  })
-    .then((x) => x.json())
-    .then((x) => x.fields);
-}
-
-export async function getCollection(
-  collectionName: string,
-  filterObject: Record<string, string | number | boolean> = {},
-  sortObject: Record<string, string | number | boolean> = {},
-): Promise<any[]> {
-  const query = [
-    ...Object.entries(filterObject).map(
-      ([key, value]) =>
-        `filter[${encodeURIComponent(key)}]=${encodeURIComponent(value)}`,
-    ),
-    ...Object.entries(sortObject).map(
-      ([key, value]) =>
-        `sort[${encodeURIComponent(key)}]=${encodeURIComponent(value)}`,
-    ),
-  ].join("&");
-  const url = `${host}/api/collections/get/${collectionName}?${query}`;
-  return await fetch(url, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      "Cockpit-Token": token,
-    },
-  })
-    .then((x) => x.json())
-    .then((x) => x.entries ?? []);
-}
-
-export async function getOneCollection(
-  collectionName: string,
-  filterObject: Record<string, string | number | boolean> = {},
-): Promise<any> {
-  const filterString = Object.entries(filterObject)
-    .map(
-      ([key, value]) =>
-        `filter[${encodeURIComponent(key)}]=${encodeURIComponent(value)}`,
-    )
-    .join("&");
-  const url = `${host}/api/collections/get/${collectionName}?${filterString}`;
-  return await getCollection(collectionName, filterObject).then((x) =>
-    x.length === 1 ? x[0] : null,
+// Get fields of a specific collection
+export async function getCollectionFields(collectionName: string): Promise<any[]> {
+  return fetchJSON(`${host}/api/collections/get/${collectionName}`, { method: "GET", headers }).then(
+    (res) => res.fields,
   );
 }
 
-export async function saveInternalDataCollection(
+// Get entries from a collection with optional filters and sorting
+export async function getCollection(
   collectionName: string,
-  data: any,
-): Promise<any> {
-  const url = `${host}/api/collections/save/${collectionName}`;
-  return await fetch(url, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Cockpit-Token": token,
-    },
-    body: JSON.stringify({
-      data: {
-        date: new Date().toISOString(),
-        data: data,
-      },
-    }),
-  }).then((x) => x.json());
+  filter: Record<string, any> = {},
+  sort: Record<string, any> = {},
+): Promise<any[]> {
+  const query = new URLSearchParams([
+    ...Object.entries(filter).map(([key, value]) => [`filter[${key}]`, value]),
+    ...Object.entries(sort).map(([key, value]) => [`sort[${key}]`, value]),
+  ] as [string, string][]);
+  const url = `${host}/api/collections/get/${collectionName}?${query}`;
+  return fetchJSON(url, { method: "GET", headers }).then((res) => res.entries ?? []);
 }
-export async function saveCollection(
+
+// Get a single entry from a collection
+export async function getOneCollection(
   collectionName: string,
-  data: any,
+  filter: Record<string, any> = {},
 ): Promise<any> {
+  return getCollection(collectionName, filter).then((entries) => (entries.length === 1 ? entries[0] : null));
+}
+
+// Save data to an internal collection
+export async function saveInternalDataCollection(collectionName: string, data: any): Promise<any> {
   const url = `${host}/api/collections/save/${collectionName}`;
-  return await fetch(url, {
+  return fetchJSON(url, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Cockpit-Token": token,
-    },
+    headers,
+    body: JSON.stringify({ data: { date: new Date().toISOString(), data } }),
+  });
+}
+
+// Save data to a collection
+export async function saveCollection(collectionName: string, data: any): Promise<any> {
+  const url = `${host}/api/collections/save/${collectionName}`;
+  return fetchJSON(url, {
+    method: "POST",
+    headers,
     body: JSON.stringify({ data }),
-  })
-    .then((x) => x.json())
-    .then((x) => ({ ...x, ...data }));
+  }).then((res) => ({ ...res, ...data }));
 }
 
-export async function deleteCollection(
-  collectionName: string,
-  id: string,
-): Promise<void> {
+// Delete an entry from a collection
+export async function deleteCollection(collectionName: string, id: string): Promise<void> {
   const url = `${host}/api/collections/remove/${collectionName}`;
-  return await fetch(url, {
+  await fetchJSON(url, {
     method: "DELETE",
-    headers: {
-      "Content-Type": "application/json",
-      "Cockpit-Token": token,
-    },
-    body: JSON.stringify({
-      filter: { _id: id },
-    }),
-  }).then((x) => x.json());
+    headers,
+    body: JSON.stringify({ filter: { _id: id } }),
+  });
 }
 
-export function getCockpitResourceUrl(url: string) {
+// Get full Cockpit resource URL
+export function getCockpitResourceUrl(url: string): string {
   if (url.startsWith("https")) return url;
-  if (url.startsWith("/storage")) return `${host}${url}`;
-  if (url.startsWith("storage")) return `${host}/${url}`;
-  return `${host}/storage/uploads/${url}`;
+  return url.startsWith("/storage") || url.startsWith("storage")
+    ? `${host}${url}`
+    : `${host}/storage/uploads/${url}`;
 }

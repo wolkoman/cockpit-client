@@ -1,56 +1,65 @@
-import {getCollection, getCollectionFields, listCollections} from "./rest";
-import {titlecase} from "./titlecase";
-
-import {generateDefinitions} from "./generateDefinitions";
+import { getCollection, getCollectionFields, listCollections } from "./rest";
+import { titlecase } from "./titlecase";
+import { generateDefinitions } from "./generateDefinitions";
 import * as fs from "node:fs";
 
 const typePrefix = "Cp";
 const singletonCollectionName = "internal-data";
 
-export function generate(outputFile: string) {
-  (async () => {
-    const collectionNames: string[] = await listCollections();
+export async function generate(outputFile: string) {
+  // Fetch all collections and their fields
+  const collectionNames: string[] = await listCollections();
+  const collections = await Promise.all(
+    collectionNames.map(async (name) => ({
+      name,
+      fields: await getCollectionFields(name),
+    })),
+  );
 
-    const collections = await Promise.all(
-      collectionNames.map(async (name) => ({
-        name,
-        fields: await getCollectionFields(name),
-      })),
+  let functionDeclaration = "";
+  let typeDefinition = "";
+
+  // Generate definitions for each collection
+  for (const { name, fields } of collections) {
+    const { functionDeclaration: funcDecl, typeDefinition: typeDef } = generateDefinitions(
+      name,
+      `${typePrefix}${titlecase(name)}`,
+      fields,
+      functionDeclaration,
+      typeDefinition,
     );
+    functionDeclaration += funcDecl;
+    typeDefinition += typeDef;
+  }
 
-    let functionDeclaration = "";
-    let typeDefinition = "";
-    collections.forEach(({name, fields}) => {
-      const result = generateDefinitions(
-        name,
-        `${typePrefix}${titlecase(name)}`,
-        fields,
-        functionDeclaration,
-        typeDefinition,
-      );
-      functionDeclaration = result.functionDeclaration;
-      typeDefinition = result.typeDefinition;
-    });
+  // Handle singleton collections
+  const singleton = collections.find((x) => x.name === singletonCollectionName);
+  if (singleton) {
+    const singletons = await getCollection(singletonCollectionName);
+    for (const { _id, id, typeDefinition: singletonTypeDef } of singletons) {
+      const typename = `${typePrefix}${titlecase(id).replace(/!/g, "_")}`;
+      typeDefinition += `export type ${typename} = CpSingleton<${singletonTypeDef ?? "{}"}>;\n`;
+      functionDeclaration += `
+export function fetch${typename}(): Promise<${typename}> {
+  return _fetchOneCollection("${singletonCollectionName}", { _id: "${_id}" }).then(x => x.data);
+}
 
-    if (collections.find((x) => x.name === singletonCollectionName)) {
-      const singeltons: { _id: string; id: string; typeDefinition: string }[] =
-        await getCollection(singletonCollectionName);
-
-      singeltons.forEach((singleton) => {
-        const typename = `${typePrefix}${titlecase(singleton.id).replace(/!/g, "_")}`;
-        typeDefinition += `export type ${typename} = CpSingleton<${singleton.typeDefinition ?? "{}"}>;\n`;
-        functionDeclaration += `export function fetch${typename}(): Promise<${typename}> {\n\treturn _fetchOneCollection("${singletonCollectionName}", { _id: "${singleton._id}"}).then(x => x.data);\n}\n\n`;
-        functionDeclaration += `export function save${typename}(data: CpSaveData<${typename}>): Promise<${typename}> {\n\treturn saveInternalDataCollection("${singletonCollectionName}", {_id: "${singleton._id}", ...data});\n}\n\n`;
-      });
+export function save${typename}(data: CpSaveData<${typename}>): Promise<${typename}> {
+  return saveInternalDataCollection("${singletonCollectionName}", { _id: "${_id}", ...data });
+}
+`;
     }
+  }
 
-    fs.writeFileSync(
-      outputFile,
-      `import { CpCollection, CpLayout, CpCollectionLink, CpAsset, CpFile, CpImage, CpFilter, CpSort, CpEntries, CpOneEntry, CpSaveData, CpSingleton } from "cockpit-client/dist/standard";\n` +
-      `import { getCollection as _fetchCollection, getOneCollection as _fetchOneCollection, saveCollection, saveInternalDataCollection, deleteCollection } from "cockpit-client/dist/rest";\n` +
-      `\n${typeDefinition}` +
-      `\n\n${functionDeclaration}`,
-      "utf8",
-    );
-  })()
+  // Write the output to the specified file
+  const fileContent = `
+import { CpCollection, CpLayout, CpCollectionLink, CpAsset, CpFile, CpImage, CpFilter, CpSort, CpEntries, CpOneEntry, CpSaveData, CpSingleton } from "cockpit-client/dist/standard";
+import { getCollection as _fetchCollection, getOneCollection as _fetchOneCollection, saveCollection, saveInternalDataCollection, deleteCollection } from "cockpit-client/dist/rest";
+
+${typeDefinition}
+
+${functionDeclaration}
+`;
+
+  fs.writeFileSync(outputFile, fileContent.trim(), "utf8");
 }
