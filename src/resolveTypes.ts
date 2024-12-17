@@ -33,18 +33,24 @@ export function resolveTypes(
     typeDefinition += `\t${fieldName}: CpCollectionLink\n`;
   } else if (options.type == "repeater") {
     const subTypename = typename + titlecase(fieldName);
-    const firstField = Object.entries(options.options.options).filter(
-      ([_, value]) => value,
-    )[0];
-    const sub = generateDefinitions(subTypename, subTypename, {value: firstField[1]});
+    const subOptions = "options" in options.options
+      ? Object.entries(options.options.options).filter(([_, value]) => value,)[0][1]
+      : "fields" in options.options
+        ? options.options.fields?.[0]
+        : null
+    const sub = generateDefinitions(subTypename, subTypename, {value: subOptions});
     typeDefinition += `\t${fieldName}: ${subTypename}[]\n`;
     additionalDefinitions += sub.typeDefinition;
   } else if (options.type == "multipleselect") {
     const enumName = `${typename}${titlecase(fieldName)}`;
     typeDefinition += `\t${fieldName}: ${enumName}[]\n`;
     additionalDefinitions += `export enum ${enumName}{\n`;
-    additionalDefinitions += options.options.options
-      .map(({value}: any) => `\t${titlecase(value)} = "${value}",`)
+    const subOptions = options.options.options;
+    additionalDefinitions += (Array.isArray(subOptions)
+        ? subOptions.map(({value}) => value)
+        : Object.entries(options.options.options).map(([value]) => value)
+    )
+      .map((value) => `\t${titlecase(value)} = "${value}",`)
       .join("\n");
     additionalDefinitions += `\n}\n`;
   } else if (options.type == "select") {
@@ -54,6 +60,16 @@ export function resolveTypes(
     additionalDefinitions += Object.entries(options.options.options)
       .map(([value]) => `\t${titlecase(value)} = "${value}",`)
       .join("\n");
+    additionalDefinitions += `\n}\n`;
+  } else if (options.type == "set") {
+    const subTypeName = `${typename}${titlecase(fieldName)}`;
+    typeDefinition += `\t${fieldName}: ${subTypeName}\n`;
+    additionalDefinitions += `export interface ${subTypeName}{\n`;
+    options.options.fields.forEach((field: any) => {
+      const subSubTypeName = `${subTypeName}${titlecase(field.name)}`;
+      const {typeDefinition: t} = resolveTypes(field, field.name, subSubTypeName, subSubTypeName);
+      additionalDefinitions += t;
+    })
     additionalDefinitions += `\n}\n`;
   } else {
     console.log(`Unrecognized field: ${options.type} for ${name}.${fieldName}`);

@@ -4,9 +4,8 @@ import { generateDefinitions } from "./generateDefinitions";
 import * as fs from "node:fs";
 
 const typePrefix = "Cp";
-const singletonCollectionName = "internal-data";
 
-export async function generate(outputFile: string) {
+export async function generate(outputFile: string, singletonCollectionName: string) {
   // Fetch all collections and their fields
   const collectionNames: string[] = await listCollections();
   const collections = await Promise.all(

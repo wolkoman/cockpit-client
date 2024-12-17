@@ -20,17 +20,14 @@ program
 program
   .command("generate")
   .description("Generate the client output file")
+  .option("-sn, --singleton-name <collection-name>", "Collection name of the dedicated singleton collection")
   .requiredOption("-o, --output <path>", "Output file path")
   .action(async (options) => {
     try {
-      // Resolve full output path
+
       const fullPath = path.resolve(process.cwd(), options.output);
-
       console.log(`Generating client output at: ${fullPath}`);
-
-      // Run the generate function
-      await generate(fullPath);
-
+      await generate(fullPath, options.singletonName ?? "internal-data");
       console.log("Client output generated successfully.");
     } catch (error) {
       console.error("Error during generation:", error);
