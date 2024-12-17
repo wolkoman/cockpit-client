@@ -102,6 +102,6 @@ export async function deleteCollection(collectionName: string, id: string): Prom
 export function getCockpitResourceUrl(url: string): string {
   if (url.startsWith("https")) return url;
   return url.startsWith("/storage") || url.startsWith("storage")
-    ? `${host}${url}`
+    ? `${host}/${url}`
     : `${host}/storage/uploads/${url}`;
 }
