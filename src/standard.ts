@@ -20,6 +20,7 @@ export interface CpImage {
 
 export interface CpCollectionLink {
   _id: string;
+  link: string;
   display?: string;
 }
 
