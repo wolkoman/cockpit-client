@@ -74,7 +74,7 @@ export async function saveInternalDataCollection(collectionName: string, data: a
   return fetchJSON(url, {
     method: "POST",
     headers,
-    body: JSON.stringify({ data: { date: new Date().toISOString(), data } }),
+    body: JSON.stringify({date: new Date().toISOString(), data }),
   });
 }
 

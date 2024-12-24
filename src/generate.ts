@@ -44,7 +44,7 @@ export function fetch${typename}(): Promise<${typename}> {
 }
 
 export function save${typename}(data: CpSaveData<${typename}>): Promise<${typename}> {
-  return saveInternalDataCollection("${singletonCollectionName}", { _id: "${_id}", ...data });
+  return saveInternalDataCollection("${singletonCollectionName}", { _id: "${_id}", data });
 }
 `;
     }
