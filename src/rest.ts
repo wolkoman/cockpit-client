@@ -64,8 +64,10 @@ export async function getCollection(
 export async function getOneCollection(
   collectionName: string,
   filter: Record<string, any> = {},
+  sort: Record<string, any> = {},
 ): Promise<any> {
-  return getCollection(collectionName, filter).then((entries) => (entries.length === 1 ? entries[0] : null));
+  return getCollection(collectionName, filter, sort)
+      .then((entries) => (entries.length === 1 ? entries[0] : null));
 }
 
 // Save data to an internal collection
