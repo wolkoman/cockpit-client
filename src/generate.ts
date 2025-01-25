@@ -60,7 +60,7 @@ ${typeDefinition}
 ${functionDeclaration}
 `;
 
-  console.log(`Generating ${typeDefinition.split("\n").length}, ${functionDeclaration.split("\n").length} lints`);
+  console.log(`Generating ${fileContent.split("\n").length} lines`);
 
   fs.writeFileSync(outputFile, fileContent.trim(), "utf8");
 }

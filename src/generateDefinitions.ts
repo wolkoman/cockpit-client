@@ -14,10 +14,10 @@ export function generateDefinitions(
   // Generate function declarations
   const functions = [
     `fetch${typename}(filter?: CpFilter<${typename}>, sort?: CpSort<${typename}>): CpEntries<${typename}> {
-      return _fetchCollection("${name}", filter);
+      return _fetchCollection("${name}", filter, sort);
     }`,
-    `fetchOne${typename}(filter?: CpFilter<${typename}>): CpOneEntry<${typename}> {
-      return _fetchOneCollection("${name}", filter);
+    `fetchOne${typename}(filter?: CpFilter<${typename}>, sort?: CpSort<${typename}>): CpOneEntry<${typename}> {
+      return _fetchOneCollection("${name}", filter, sort);
     }`,
     `save${typename}(data: CpSaveData<${typename}>): CpOneEntry<${typename}> {
       return saveCollection("${name}", data);
