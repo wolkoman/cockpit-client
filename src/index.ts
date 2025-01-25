@@ -5,18 +5,15 @@ import { generate } from "./generate";
 import dotenv from "dotenv";
 import path from "node:path";
 
-// Load environment variables
 dotenv.config();
 
 const program = new Command();
 
-// CLI metadata
 program
   .name("cockpit-client")
   .description("CLI for generating cockpit-client outputs")
   .version("1.0.0");
 
-// Generate command
 program
   .command("generate")
   .description("Generate the client output file")
@@ -35,5 +32,4 @@ program
     }
   });
 
-// Parse arguments asynchronously
 program.parseAsync(process.argv);

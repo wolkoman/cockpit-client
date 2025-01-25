@@ -85,7 +85,7 @@ export async function saveCollection(collectionName: string, data: any): Promise
     method: "POST",
     headers,
     body: JSON.stringify({ data }),
-  }).then((res) => ({ ...res, ...data }));
+  }).then((res) => ({ ...data, ...res }));
 }
 
 // Delete an entry from a collection
