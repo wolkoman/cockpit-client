@@ -50,7 +50,7 @@ export function resolveTypes(
         ? subOptions.map(({value}) => value)
         : Object.entries(options.options.options).map(([value]) => value)
     )
-      .map((value) => `\t${titlecase(value)} = "${value}",`)
+      .map((value) => `\t"${titlecase(value)}" = "${value}",`)
       .join("\n");
     additionalDefinitions += `\n}\n`;
   } else if (options.type == "select") {
@@ -58,7 +58,7 @@ export function resolveTypes(
     typeDefinition += `\t${fieldName}: ${enumName}\n`;
     additionalDefinitions += `export enum ${enumName}{\n`;
     additionalDefinitions += Object.entries(options.options.options)
-      .map(([value]) => `\t${titlecase(value)} = "${value}",`)
+      .map(([value]) => `\t"${titlecase(value)}" = "${value}",`)
       .join("\n");
     additionalDefinitions += `\n}\n`;
   } else if (options.type == "set") {
