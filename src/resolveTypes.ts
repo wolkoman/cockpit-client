@@ -11,6 +11,11 @@ export function resolveTypes(
   let additionalDefinitions = "";
   if (options.type == "text") {
     typeDefinition += `\t${fieldName}: string\n`;
+    if(options.options?.slug){
+      typeDefinition += `\t${fieldName}_slug: string\n`;
+    }
+  } else if (options.type == "wysiwyg") {
+    typeDefinition += `\t${fieldName}: string\n`;
   } else if (options.type == "date") {
     typeDefinition += `\t${fieldName}: string\n`;
   } else if (options.type == "textarea") {
